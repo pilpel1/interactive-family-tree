@@ -109,7 +109,7 @@ function findFreePositionCircular(startPosition) {
         }
     }
     
-    // אם לא נמצא מיקום פנוי, נ��ר מיקום אקראי בריבוע קטן יותר
+    // אם לא נמצא מיקום פנוי, נר מיקום אקראי בריבוע קטן יותר
     return {
         x: startPosition.x + (Math.random() * 300 - 150),
         y: startPosition.y + (Math.random() * 300 - 150)
@@ -244,11 +244,63 @@ function loadPeopleFromStorage() {
     }
 }
 
-// אירועים
+let isCreatingEdge = false;  // מצב יצירת קשרים
+let firstSelectedNode = null;  // השמירה של הצומת הראשון שנבחר
+
+// פונקציה להפעלת/כיבוי מצב יצירת קשרים
+function toggleEdgeCreation() {
+    isCreatingEdge = !isCreatingEdge;
+    firstSelectedNode = null;  // איפוס הבחירה
+    
+    // עדכון הכפתור
+    const btn = document.getElementById('createEdgeBtn');
+    if (btn) {
+        btn.classList.toggle('active', isCreatingEdge);
+        btn.textContent = isCreatingEdge ? 'בטל חיבור' : 'חבר בין אנשים';
+    }
+    
+    // שינוי סמן העכבר בהתאם למצב
+    cy.container().style.cursor = isCreatingEdge ? 'crosshair' : 'default';
+}
+
+// עדכון אירוע הלחיצה על צמתים
 cy.on('tap', 'node', function(evt) {
-    openEditModal(evt.target);
+    if (isCreatingEdge) {
+        const clickedNode = evt.target;
+        
+        if (!firstSelectedNode) {
+            // בחירה ראשונה
+            firstSelectedNode = clickedNode;
+            firstSelectedNode.addClass('selected');
+        } else if (firstSelectedNode.id() !== clickedNode.id()) {
+            // בחירה שניה - יצירת הקשר
+            cy.add({
+                group: 'edges',
+                data: {
+                    id: 'edge-' + Date.now(),
+                    source: firstSelectedNode.id(),
+                    target: clickedNode.id()
+                }
+            });
+            
+            // איפוס המצב
+            firstSelectedNode.removeClass('selected');
+            firstSelectedNode = null;
+            toggleEdgeCreation();
+            savePeopleToStorage();  // שמירת השינויים
+        }
+    } else {
+        openEditModal(evt.target);
+    }
 });
 
+// הוספת סגנון לצמתים נבחרים
+cy.style().selector('.selected').style({
+    'border-width': 4,
+    'border-color': '#ff0000'
+}).update();
+
+// אירועים
 cy.on('drag', 'node', function(evt) {
     const node = evt.target;
     const pos = node.position();

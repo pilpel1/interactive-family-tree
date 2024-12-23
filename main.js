@@ -55,6 +55,24 @@ const cy = cytoscape({
 
 let currentEditId = null;
 const modal = document.getElementById('editModal');
+let isCreatingEdge = false;  // מצב יצירת קשרים
+let firstSelectedNode = null;  // השמירה של הצומת הראשון שנבחר
+
+// פונקציה להפעלת/כיבוי מצב יצירת קשרים
+function toggleEdgeCreation() {
+    isCreatingEdge = !isCreatingEdge;
+    firstSelectedNode = null;  // איפוס הבחירה
+    
+    // עדכון הכפתור
+    const btn = document.getElementById('createEdgeBtn');
+    if (btn) {
+        btn.classList.toggle('active', isCreatingEdge);
+        btn.textContent = isCreatingEdge ? 'בטל יצירת קשר' : 'צור קשר';
+    }
+    
+    // שינוי סמן העכבר בהתאם למצב
+    cy.container().style.cursor = isCreatingEdge ? 'crosshair' : 'default';
+}
 
 // פונקציות בסיסיות
 function addPerson() {
@@ -176,7 +194,32 @@ function exportImage() {
 
 // אירועים
 cy.on('tap', 'node', function(evt) {
-    openEditModal(evt.target);
+    if (isCreatingEdge) {
+        const clickedNode = evt.target;
+        
+        if (!firstSelectedNode) {
+            // בחירה ראשונה
+            firstSelectedNode = clickedNode;
+            firstSelectedNode.addClass('selected');
+        } else if (firstSelectedNode.id() !== clickedNode.id()) {
+            // בחירה שניה - יצירת הקשר
+            cy.add({
+                group: 'edges',
+                data: {
+                    id: 'edge-' + Date.now(),
+                    source: firstSelectedNode.id(),
+                    target: clickedNode.id()
+                }
+            });
+            
+            // איפוס המצב
+            firstSelectedNode.removeClass('selected');
+            firstSelectedNode = null;
+            toggleEdgeCreation();
+        }
+    } else {
+        openEditModal(evt.target);
+    }
 });
 
 cy.on('drag', 'node', function(evt) {
@@ -230,6 +273,12 @@ if (existingGrid) {
     existingGrid.remove();
 }
 
+// הוספת סגנון לצמתים נבחרים
+cy.style().selector('.selected').style({
+    'border-width': 4,
+    'border-color': '#ff0000'
+}).update();
+
 // ייצוא הפונקציות הנחוצות
 export {
     addPerson,
@@ -237,5 +286,20 @@ export {
     closeModal,
     savePerson,
     deletePerson,
-    exportImage
-}; 
+    exportImage,
+    toggleEdgeCreation
+};
+
+// חשיפת הפונקציות לחלון הגלובלי
+window.addPerson = addPerson;
+window.openEditModal = openEditModal;
+window.closeModal = closeModal;
+window.savePerson = savePerson;
+window.deletePerson = deletePerson;
+window.exportImage = exportImage;
+window.toggleEdgeCreation = toggleEdgeCreation;
+
+// טעינת המידע בעת טעינת הדף
+window.addEventListener('DOMContentLoaded', () => {
+    loadPeopleFromStorage();
+}); 
