@@ -14,7 +14,7 @@
 
 1. הורד את הפרויקט:
 \`\`\`bash
-git clone https://github.com/your-username/interactive-family-tree.git
+git clone https://github.com/pilpel1/interactive-family-tree.git
 cd interactive-family-tree
 \`\`\`
 
