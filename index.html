@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>עץ משפחה אינטראקטיבי</title>
+    
+    <!-- Cytoscape.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="toolbar">
+        <button onclick="addPerson()">הוסף אדם</button>
+        <button onclick="exportImage()">ייצא לתמונה</button>
+    </div>
+    
+    <div id="cy"></div>
+
+    <!-- דיאלוג עריכה -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="form-group">
+                <label for="personName">שם:</label>
+                <input type="text" id="personName">
+            </div>
+            <div class="form-group">
+                <label for="personGender">מין:</label>
+                <select id="personGender">
+                    <option value="male">זכר</option>
+                    <option value="female">נקבה</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="personHealth">מצב בריאותי:</label>
+                <select id="personHealth">
+                    <option value="healthy">בריא</option>
+                    <option value="sick">חולה</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="personNotes">הערות:</label>
+                <input type="text" id="personNotes">
+            </div>
+            <div class="button-group">
+                <button onclick="savePerson()">שמור</button>
+                <button class="button-delete" onclick="deletePerson()">מחק</button>
+                <button onclick="closeModal()">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
