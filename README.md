@@ -13,12 +13,12 @@
 ## התקנה 🚀
 
 1. הורד את הפרויקט:
-\`\`\`bash
+```bash
 git clone https://github.com/pilpel1/interactive-family-tree.git
 cd interactive-family-tree
-\`\`\`
+```
 
-2. פתח את הקובץ \`index.html\` בדפדפן
+2. פתח את הקובץ `index.html` בדפדפן
 
 ## שימוש 💡
 
@@ -43,7 +43,7 @@ MIT License - ראה קובץ [LICENSE](LICENSE) לפרטים נוספים.
 
 מוזמנים לתרום! אנא:
 1. עשו fork לפרויקט
-2. צרו branch חדש (\`git checkout -b feature/amazing-feature\`)
-3. עשו commit לשינויים (\`git commit -m 'Add amazing feature'\`)
-4. עשו push ל-branch (\`git push origin feature/amazing-feature\`)
+2. צרו branch חדש (`git checkout -b feature/amazing-feature`)
+3. עשו commit לשינויים (`git commit -m 'Add amazing feature'`)
+4. עשו push ל-branch (`git push origin feature/amazing-feature`)
 5. פתחו Pull Request 
