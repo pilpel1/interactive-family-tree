@@ -109,7 +109,7 @@ function findFreePositionCircular(startPosition) {
         }
     }
     
-    // אם לא נמצא מיקום פנוי, נחזיר מיקום אקראי בריבוע קטן יותר
+    // אם לא נמצא מיקום פנוי, נ��ר מיקום אקראי בריבוע קטן יותר
     return {
         x: startPosition.x + (Math.random() * 300 - 150),
         y: startPosition.y + (Math.random() * 300 - 150)
@@ -283,8 +283,56 @@ cy.on('dragfree', 'node', function(evt) {
 loadPeopleFromStorage();
 
 function exportImage() {
-    // TODO: להוסיף ייצוא לתמונה
-    alert('בקרוב...');
+    // הסתרת קווי הגריד זמנית
+    cy.$('.grid-line').style('opacity', 0);
+    
+    // מציאת הגבולות של כל הצמתים
+    const nodes = cy.nodes().not('.grid-line');
+    if (nodes.length === 0) {
+        alert('אין צמתים להצגה');
+        return;
+    }
+
+    const positions = nodes.map(node => node.position());
+    const minX = Math.min(...positions.map(p => p.x));
+    const maxX = Math.max(...positions.map(p => p.x));
+    const minY = Math.min(...positions.map(p => p.y));
+    const maxY = Math.max(...positions.map(p => p.y));
+    
+    // חישוב גודל האזור
+    const width = maxX - minX;
+    const height = maxY - minY;
+    
+    // חישוב ריווח יחסי - 15% מהצד הגדול יותר
+    const padding = Math.max(width, height) * 0.15;
+    
+    // יצירת תמונה
+    const png64 = cy.png({
+        scale: 2,  // איכות גבוהה יותר
+        bg: '#ffffff',  // רקע לבן
+        clip: true,  // חיתוך לפי הגבולות
+        bounds: [ // [x1, y1, x2, y2]
+            minX - padding,
+            minY - padding,
+            maxX + padding,
+            maxY + padding
+        ],
+        maxWidth: 2000,  // הגבלת רוחב מקסימלי
+        maxHeight: 2000  // הגבלת גובה מקסימלי
+    });
+    
+    // החזרת קווי הגריד
+    cy.$('.grid-line').style('opacity', 0.8);
+    
+    // יצירת קישור להורדה
+    const downloadLink = document.createElement('a');
+    downloadLink.href = png64;
+    downloadLink.download = 'family-tree.png';
+    
+    // הורדת הקובץ
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
 }
 
 // עונקציה ליצירת קווי גריד

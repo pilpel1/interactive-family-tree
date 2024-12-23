@@ -150,8 +150,28 @@ function loadPeopleFromStorage() {
 }
 
 function exportImage() {
-    // TODO: להוסיף ייצוא לתמונה
-    alert('בקרוב...');
+    // הסתרת קווי הגריד זמנית
+    cy.$('.grid-line').style('opacity', 0);
+    
+    // יצירת תמונה
+    const png64 = cy.png({
+        scale: 2,  // איכות גבוהה יותר
+        full: true,  // כל העץ
+        bg: '#ffffff'  // רקע לבן
+    });
+    
+    // החזרת קווי הגריד
+    cy.$('.grid-line').style('opacity', 0.8);
+    
+    // יצירת קישור להורדה
+    const downloadLink = document.createElement('a');
+    downloadLink.href = png64;
+    downloadLink.download = 'family-tree.png';
+    
+    // הורדת הקובץ
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
 }
 
 // אירועים
