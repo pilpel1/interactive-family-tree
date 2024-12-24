@@ -52,6 +52,23 @@
         </div>
     </div>
 
+    <!-- דיאלוג בחירת סוג קשר -->
+    <div id="relationshipModal" class="modal">
+        <div class="modal-content">
+            <h3>בחר סוג קשר</h3>
+            <div class="form-group">
+                <select id="relationshipType">
+                    <option value="spouse">נישואין</option>
+                    <option value="parent-child">הורה-ילד</option>
+                </select>
+            </div>
+            <div class="button-group">
+                <button onclick="saveRelationship()">שמור</button>
+                <button onclick="closeRelationshipModal()">ביטול</button>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html> 

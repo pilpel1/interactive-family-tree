@@ -109,7 +109,7 @@ function findFreePositionCircular(startPosition) {
         }
     }
     
-    // אם לא נמצא מיקום פנוי, נר מיקום אקראי בריבוע קטן יותר
+    // אם לא נמצא מיקום פנוי, נמצא מיקום אקראי בריבוע קטן יותר
     return {
         x: startPosition.x + (Math.random() * 300 - 150),
         y: startPosition.y + (Math.random() * 300 - 150)
@@ -241,11 +241,166 @@ function loadPeopleFromStorage() {
         const people = JSON.parse(saved);
         cy.add(people);
         cy.nodes().forEach(updateNodeStyle);
+        cy.edges().forEach(updateEdgeStyle);
     }
 }
 
-let isCreatingEdge = false;  // מצב יצירת קשרים
-let firstSelectedNode = null;  // השמירה של הצומת הראשון שנבחר
+let isCreatingEdge = false;
+let firstSelectedNode = null;
+const relationshipModal = document.getElementById('relationshipModal');
+let pendingRelationship = null;
+
+function closeRelationshipModal() {
+    relationshipModal.style.display = 'none';
+    if (firstSelectedNode) {
+        firstSelectedNode.removeClass('selected');
+        firstSelectedNode = null;
+    }
+    pendingRelationship = null;
+    isCreatingEdge = false;
+}
+
+function saveRelationship() {
+    if (!pendingRelationship) return;
+    
+    const { source, target } = pendingRelationship;
+    const relationshipType = document.getElementById('relationshipType').value;
+    
+    if (relationshipType === 'parent-child') {
+        // בדיקה אם יש כבר קשר נישואין לצומת המקור
+        const spouseEdge = source.connectedEdges().filter(edge => 
+            edge.data('relationship') === 'spouse'
+        )[0];
+        
+        if (spouseEdge) {
+            // מצאנו בן/בת זוג - נוסיף קשר הורה-ילד משניהם
+            const otherParent = spouseEdge.source().id() === source.id() 
+                ? spouseEdge.target() 
+                : spouseEdge.source();
+            
+            // יצירת צומת ביניים לקשר ההורות
+            const parentageNode = {
+                group: 'nodes',
+                data: { 
+                    id: 'parentage-' + Date.now(),
+                    virtual: true  // סימון שזה צומת וירטואלי
+                },
+                position: {
+                    x: (source.position().x + otherParent.position().x) / 2,
+                    y: (source.position().y + target.position().y) / 2
+                },
+                classes: 'parentage-node'
+            };
+            
+            // הוספת צומת הביניים
+            cy.add(parentageNode);
+            const parentageNodeId = parentageNode.data.id;
+            
+            // יצירת הקשרים
+            cy.add([
+                {
+                    group: 'edges',
+                    data: {
+                        id: 'edge-parent1-' + Date.now(),
+                        source: source.id(),
+                        target: parentageNodeId,
+                        relationship: 'parentage-connection'
+                    }
+                },
+                {
+                    group: 'edges',
+                    data: {
+                        id: 'edge-parent2-' + Date.now(),
+                        source: otherParent.id(),
+                        target: parentageNodeId,
+                        relationship: 'parentage-connection'
+                    }
+                },
+                {
+                    group: 'edges',
+                    data: {
+                        id: 'edge-child-' + Date.now(),
+                        source: parentageNodeId,
+                        target: target.id(),
+                        relationship: 'parent-child'
+                    }
+                }
+            ]);
+        } else {
+            // אין בן/בת זוג - נוסיף קשר הורה-ילד רגיל
+            cy.add({
+                group: 'edges',
+                data: {
+                    id: 'edge-' + Date.now(),
+                    source: source.id(),
+                    target: target.id(),
+                    relationship: 'parent-child'
+                }
+            });
+        }
+    } else {
+        // קשר נישואין רגיל
+        cy.add({
+            group: 'edges',
+            data: {
+                id: 'edge-' + Date.now(),
+                source: source.id(),
+                target: target.id(),
+                relationship: 'spouse'
+            }
+        });
+    }
+    
+    // עדכון הסגנונות
+    cy.edges().forEach(updateEdgeStyle);
+    
+    // שמירה ואיפוס
+    savePeopleToStorage();
+    closeRelationshipModal();
+}
+
+function updateEdgeStyle(edge) {
+    const relationship = edge.data('relationship');
+    
+    switch (relationship) {
+        case 'parent-child':
+            edge.style({
+                'line-style': 'solid',
+                'target-arrow-shape': 'triangle',
+                'line-color': '#666',
+                'width': 2
+            });
+            break;
+        case 'parentage-connection':
+            edge.style({
+                'line-style': 'solid',
+                'target-arrow-shape': 'none',
+                'line-color': '#666',
+                'width': 1
+            });
+            break;
+        case 'spouse':
+            edge.style({
+                'line-style': 'solid',
+                'line-color': '#f00',
+                'target-arrow-shape': 'none',
+                'width': 2
+            });
+            break;
+    }
+}
+
+// הוספת סגנון לצומת הביניים של ההורות
+cy.style()
+    .selector('.parentage-node')
+    .style({
+        'width': 10,
+        'height': 10,
+        'background-color': '#666',
+        'label': '',
+        'events': 'no'
+    })
+    .update();
 
 // פונקציה להפעלת/כיבוי מצב יצירת קשרים
 function toggleEdgeCreation() {
@@ -273,21 +428,14 @@ cy.on('tap', 'node', function(evt) {
             firstSelectedNode = clickedNode;
             firstSelectedNode.addClass('selected');
         } else if (firstSelectedNode.id() !== clickedNode.id()) {
-            // בחירה שניה - יצירת הקשר
-            cy.add({
-                group: 'edges',
-                data: {
-                    id: 'edge-' + Date.now(),
-                    source: firstSelectedNode.id(),
-                    target: clickedNode.id()
-                }
-            });
+            // במירת המידע לקשר החדש
+            pendingRelationship = {
+                source: firstSelectedNode,
+                target: clickedNode
+            };
             
-            // איפוס המצב
-            firstSelectedNode.removeClass('selected');
-            firstSelectedNode = null;
-            toggleEdgeCreation();
-            savePeopleToStorage();  // שמירת השינויים
+            // פתיחת הדיאלוג לבחירת סוג הקשר
+            relationshipModal.style.display = 'block';
         }
     } else {
         openEditModal(evt.target);
