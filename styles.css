@@ -48,6 +48,14 @@ body {
     background: #357abd;
 }
 
+#toolbar button.button-reset {
+    background: #dc3545;
+}
+
+#toolbar button.button-reset:hover {
+    background: #c82333;
+}
+
 #dragContainer {
     display: flex;
     flex-direction: column;
@@ -180,4 +188,21 @@ body {
 
 .sick {
     background-color: #dc3545 !important;
+}
+
+#zoomContainer {
+    display: flex;
+    gap: 5px;
+}
+
+#zoomContainer button {
+    flex: 1;
+    padding: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    background: #4a90e2;
+}
+
+#zoomContainer button:hover {
+    background: #357abd;
 } 

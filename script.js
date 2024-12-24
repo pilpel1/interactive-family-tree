@@ -94,9 +94,9 @@ function isPositionOccupied(position) {
     });
 }
 
-// פונקציית עזר למציאת מיקום פנוי בצורה מעגלית (לאנשים חדשים)
+// פונקציית עזר למציאת מיקום פנוי בצורה מעגלי (לאנשים חדשים)
 function findFreePositionCircular(startPosition) {
-    // בדיקת המיקום ההתחלתי
+    // דיקת המיקום ההתחלתי
     if (!isPositionOccupied(startPosition)) {
         return startPosition;
     }
@@ -107,7 +107,7 @@ function findFreePositionCircular(startPosition) {
         const pointsInCircle = Math.max(8 * radius, 8);
         
         for (let i = 0; i < pointsInCircle; i++) {
-            // חישוב זווית בין 0 ל-2π
+            // חישוב זווית בי 0 ל-2π
             const angle = (i * 2 * Math.PI) / pointsInCircle;
             
             // חישוב המיקום על המעגל
@@ -142,7 +142,7 @@ function findFreePositionDrag(startPosition, originalPosition) {
     // קביעת כיוון החיפוש הראשוני לפי המיקום המקורי
     const searchRight = originalPosition.x > startPosition.x;
     
-    // חיפוש מיקום פנוי באותה שורה
+    // חיפוש מקום פנוי באותה שור
     for (let offset = 1; offset <= 4; offset++) {
         // בודקים קודם בכיוון המועדף
         const preferredPos = {
@@ -230,7 +230,8 @@ function savePerson() {
 function deletePerson() {
     if (!currentEditId) return;
     
-    cy.getElementById(currentEditId).remove();
+    const node = cy.getElementById(currentEditId);
+    node.remove();
     savePeopleToStorage();
     closeModal();
 }
@@ -252,6 +253,7 @@ function savePeopleToStorage() {
 }
 
 function loadPeopleFromStorage() {
+    console.log('Loading from storage');
     const saved = localStorage.getItem('familyTreePeople');
     if (saved) {
         const people = JSON.parse(saved);
@@ -282,6 +284,8 @@ function saveRelationship() {
     const { source, target } = pendingRelationship;
     const relationshipType = document.getElementById('relationshipType').value;
     
+    const elementsToAdd = [];
+    
     if (relationshipType === 'parent-child') {
         // בדיקה אם יש כבר קשר נישואין לצומת המקור
         const spouseEdge = source.connectedEdges().filter(edge => 
@@ -294,12 +298,12 @@ function saveRelationship() {
                 ? spouseEdge.target() 
                 : spouseEdge.source();
             
-            // יצירת צומת ביניים לקשר ההורות
+            // יצירת צומת ביניים לקשר הורות
             const parentageNode = {
                 group: 'nodes',
                 data: { 
                     id: 'parentage-' + Date.now(),
-                    virtual: true  // סימון שזה צומת וירטואלי
+                    virtual: true  // סימן שזה צומת וירטואלי
                 },
                 position: {
                     x: (source.position().x + otherParent.position().x) / 2,
@@ -427,7 +431,7 @@ function toggleEdgeCreation() {
     const btn = document.getElementById('createEdgeBtn');
     if (btn) {
         btn.classList.toggle('active', isCreatingEdge);
-        btn.textContent = isCreatingEdge ? 'בטל חיבור' : 'חבר בין אנשים';
+        btn.textContent = isCreatingEdge ? 'בטל חיבור' : 'חבר בין נשים';
     }
     
     // שינוי סמן העכבר בתאם למצב
@@ -469,8 +473,13 @@ cy.on('drag', 'node', function(evt) {
     const node = evt.target;
     const pos = node.position();
     
-    // הצג קווי עזר או נקודות גריד בזמן הגרירה
-    // TODO: ��פשר להוסיף ויזואליזציה של הגריד בעתיד
+    // הצג קווי זר או נקודות ריד בזמן הגרירה
+    // TODO: פשר להוסיף ויזואליזציה של הגריד בעתיד
+});
+
+// אירועים
+cy.on('dragstart', 'node', function(evt) {
+    // אין צורך בשמירת מצב לפני גרירה
 });
 
 cy.on('dragfree', 'node', function(evt) {
@@ -495,8 +504,18 @@ cy.on('dragfree', 'node', function(evt) {
     savePeopleToStorage();
 });
 
-// טעינת מידע בעת טעינת הדף
-loadPeopleFromStorage();
+// טעינת המידע בעת טעינת הדף
+window.addEventListener('DOMContentLoaded', () => {
+    isInitializing = true; // מסמנים שאנחנו באתחול
+    
+    // טעינת המידע מה-localStorage
+    loadPeopleFromStorage();
+    
+    setTimeout(() => {
+        isInitializing = false; // מסיימים את האתחול
+        console.log('Initialization complete');
+    }, 100);
+});
 
 function exportImage() {
     // הסתרת קווי הגריד זמנית
@@ -505,7 +524,7 @@ function exportImage() {
     // מציאת הגבולות של כל הצמתים
     const nodes = cy.nodes().not('.grid-line');
     if (nodes.length === 0) {
-        alert('אין צמתים להצגה');
+        alert('אין צמתים להגה');
         return;
     }
 
@@ -519,14 +538,14 @@ function exportImage() {
     const width = maxX - minX;
     const height = maxY - minY;
     
-    // חישוב ריווח יחסי - 15% מהצד הגדול יותר
+    // חישוב ריווח יחיד - 15% מהצד הגדול יותר
     const padding = Math.max(width, height) * 0.15;
     
     // יצירת תמונה
     const png64 = cy.png({
         scale: 2,  // איכות גבוהה יותר
         bg: '#ffffff',  // רקע לבן
-        clip: true,  // חיתוך לפי הגבולות
+        clip: true,  // חתוך לפי הגבולות
         bounds: [ // [x1, y1, x2, y2]
             minX - padding,
             minY - padding,
@@ -562,7 +581,7 @@ function drawGrid() {
     const extent = cy.extent();
     console.log('Extent:', extent);
     
-    // הוספת קווים אופקיים
+    // הוספת קוים אופקיים
     const startY = Math.floor(extent.y1 / GRID_SIZE) * GRID_SIZE;
     const endY = Math.ceil(extent.y2 / GRID_SIZE) * GRID_SIZE;
     
@@ -607,7 +626,7 @@ function drawGrid() {
     console.log('Grid elements:', cy.$('.grid-line').length);
 }
 
-// עדכון אירועי זום ופאן
+// עדכון אירועי זו ופאן
 cy.on('zoom', function() {
     drawGrid();
 });
@@ -619,7 +638,7 @@ cy.on('pan', function() {
 // קריאה ראשונית לציור הגריד
 cy.ready(function() {
     console.log('Cytoscape is ready');
-    setTimeout(drawGrid, 100);  // נותן לגרף להתייצב לפני יצירת הגריד
+    setTimeout(drawGrid, 100);  // נותן לגרף להתייצב לפ��י יצירת הגריד
 });
 
 // הסרת הקוד הישן של הגריד
@@ -647,19 +666,16 @@ cy.container().addEventListener('drop', (e) => {
     const gender = e.dataTransfer.getData('gender');
     if (!gender) return;
     
-    // המרת מיקום העכבר למיקום בגרף
     const containerBounds = cy.container().getBoundingClientRect();
     const position = {
         x: e.clientX - containerBounds.left,
         y: e.clientY - containerBounds.top
     };
     
-    // המרה למיקום בגרף
     const graphPosition = cy.renderer().projectIntoViewport(position.x, position.y);
     const snappedPosition = snapToGrid({ x: graphPosition[0], y: graphPosition[1] });
     const freePosition = findFreePositionCircular(snappedPosition);
     
-    // יצירת האדם החדש
     const person = {
         group: 'nodes',
         data: { 
@@ -674,4 +690,42 @@ cy.container().addEventListener('drop', (e) => {
     
     cy.add(person);
     savePeopleToStorage();
-}); 
+});
+
+function resetState() {
+    if (confirm('האם אתה בטוח שברצונך לאפס את העץ? פעולה זו תמחק את כל הנתונים.')) {
+        cy.elements().remove(); // מחיקת כל הצמתים והקשרים
+        localStorage.removeItem('familyTreePeople'); // מחיקת המידע מהאחסון המקומי
+        drawGrid(); // ציור מחדש של הגריד
+    }
+}
+
+const ZOOM_FACTOR = 1.2; // פקטור הזום בכל לחיצה
+
+function zoomIn() {
+    cy.zoom({
+        level: cy.zoom() * ZOOM_FACTOR,
+        renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 }
+    });
+}
+
+function zoomOut() {
+    cy.zoom({
+        level: cy.zoom() / ZOOM_FACTOR,
+        renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 }
+    });
+}
+
+// חשיפת הפונקציות לחלון הגלובלי
+window.addPerson = addPerson;
+window.openEditModal = openEditModal;
+window.closeModal = closeModal;
+window.savePerson = savePerson;
+window.deletePerson = deletePerson;
+window.exportImage = exportImage;
+window.toggleEdgeCreation = toggleEdgeCreation;
+window.resetState = resetState; // חשיפת פונקציית האיפוס
+window.zoomIn = zoomIn;
+window.zoomOut = zoomOut;
+
+// טחיקת האירוע הכפול של DOMContentLoaded 

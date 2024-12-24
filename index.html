@@ -17,8 +17,13 @@
             <div class="draggable-person male" draggable="true" data-gender="male">גבר חדש</div>
             <div class="draggable-person female" draggable="true" data-gender="female">אישה חדשה</div>
         </div>
+        <div id="zoomContainer">
+            <button onclick="zoomIn()">+</button>
+            <button onclick="zoomOut()">-</button>
+        </div>
         <button onclick="exportImage()">ייצא לתמונה</button>
         <button id="createEdgeBtn" onclick="toggleEdgeCreation()">חבר בין אנשים</button>
+        <button onclick="resetState()" class="button-reset">אפס הכל</button>
     </div>
     
     <div id="cy"></div>
