@@ -20,13 +20,29 @@ const cy = cytoscape({
     container: document.getElementById('cy'),
     style: [
         {
-            selector: 'node',
+            selector: 'node[gender = "male"]',
             style: {
                 'label': 'data(name)',
                 'text-valign': 'center',
                 'text-halign': 'center',
                 'width': 50,
                 'height': 50,
+                'shape': 'rectangle',
+                'background-color': '#fff',
+                'border-width': 2,
+                'border-color': '#666',
+                'z-index': 999
+            }
+        },
+        {
+            selector: 'node[gender = "female"]',
+            style: {
+                'label': 'data(name)',
+                'text-valign': 'center',
+                'text-halign': 'center',
+                'width': 50,
+                'height': 50,
+                'shape': 'ellipse',
                 'background-color': '#fff',
                 'border-width': 2,
                 'border-color': '#666',
@@ -414,7 +430,7 @@ function toggleEdgeCreation() {
         btn.textContent = isCreatingEdge ? 'בטל חיבור' : 'חבר בין אנשים';
     }
     
-    // שינוי סמן העכבר בהתאם למצב
+    // שינוי סמן העכבר בתאם למצב
     cy.container().style.cursor = isCreatingEdge ? 'crosshair' : 'default';
 }
 
@@ -454,7 +470,7 @@ cy.on('drag', 'node', function(evt) {
     const pos = node.position();
     
     // הצג קווי עזר או נקודות גריד בזמן הגרירה
-    // TODO: אפשר להוסיף ויזואליזציה של הגריד בעתיד
+    // TODO: ��פשר להוסיף ויזואליזציה של הגריד בעתיד
 });
 
 cy.on('dragfree', 'node', function(evt) {
@@ -610,4 +626,52 @@ cy.ready(function() {
 const existingGrid = document.querySelector('.grid-lines');
 if (existingGrid) {
     existingGrid.remove();
-} 
+}
+
+// הוספת תמיכה בגרירת אנשים חדשים
+document.querySelectorAll('.draggable-person').forEach(element => {
+    element.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('gender', e.target.dataset.gender);
+    });
+});
+
+// הגדרת אזור הגרירה על הגרף
+cy.container().addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+});
+
+cy.container().addEventListener('drop', (e) => {
+    e.preventDefault();
+    
+    const gender = e.dataTransfer.getData('gender');
+    if (!gender) return;
+    
+    // המרת מיקום העכבר למיקום בגרף
+    const containerBounds = cy.container().getBoundingClientRect();
+    const position = {
+        x: e.clientX - containerBounds.left,
+        y: e.clientY - containerBounds.top
+    };
+    
+    // המרה למיקום בגרף
+    const graphPosition = cy.renderer().projectIntoViewport(position.x, position.y);
+    const snappedPosition = snapToGrid({ x: graphPosition[0], y: graphPosition[1] });
+    const freePosition = findFreePositionCircular(snappedPosition);
+    
+    // יצירת האדם החדש
+    const person = {
+        group: 'nodes',
+        data: { 
+            id: 'person-' + Date.now(),
+            name: '',
+            gender: gender,
+            health: 'healthy',
+            notes: ''
+        },
+        position: freePosition
+    };
+    
+    cy.add(person);
+    savePeopleToStorage();
+}); 
